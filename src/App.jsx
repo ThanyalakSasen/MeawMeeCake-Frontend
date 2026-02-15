@@ -1,0 +1,150 @@
+import { Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/LoginPage';
+import Register from "./pages/RegisterPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
+import Dashboard from "./pages/DashboardPage";
+import ProtectedRoute from './components/ProtectedRoute';
+import "react-datepicker/dist/react-datepicker.css";
+import AuthCallback from "./pages/AuthCallback";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import CompleteProfile from "./pages/CompleteProfile";
+import UpdateProfile from "./pages/UpdatePage";
+import DetailInfoOwnerAndEmployee from "./pages/ownerPages/DetailInfoOwnerAndEmployee";
+import UpdateInfoEmployeeForOwner from "./pages/ownerPages/UpdateInfoEmployeeForOwner";
+import EmployeeDeletedManage from "./pages/ownerPages/EmployeeDeletedManage";
+import EmployeeManage from "./pages/ownerPages/EmployeeManage";
+import CreateUserForOwner from "./pages/ownerPages/CreateUserForOwner";
+import ProductManageForOwner from "./pages/ownerPages/ProductManageForOwner";
+import AddProductForOwner from "./pages/ownerPages/AddProductForOwner";
+import ProductDetail from "./pages/ownerPages/ProductDetail";
+import InformationProfile from "./pages/InformationProfile";
+
+function App() {
+  return (
+    <Routes>
+      {/* หน้าแรก → Login */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+
+      {/* Auth Pages (Public) */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+      
+      {/* Google OAuth Callback */}
+      <Route path="/auth/callback" element={<AuthCallback />} />
+      
+      {/* Complete Profile (Protected - ต้องมี token) */}
+      <Route
+        path="/complete-profile"
+        element={
+          <ProtectedRoute>
+            <CompleteProfile />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/update" element={
+        <ProtectedRoute allowIncomplete>
+            <UpdateProfile />
+        </ProtectedRoute>
+} />
+
+      {/* Dashboard (Protected - ต้อง profileCompleted: true) */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Employee Manage (Protected) */}
+      <Route
+        path="/employeeManage"
+        element={
+          <ProtectedRoute>
+            <EmployeeManage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Create User For Admin (Protected) */}
+      <Route
+        path="/create-employee"
+        element={
+          <ProtectedRoute>
+            <CreateUserForOwner />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* View Employee Detail (Protected) */}
+      <Route
+        path="/view-info-employee/:userId"
+        element={
+          <ProtectedRoute>
+            <DetailInfoOwnerAndEmployee />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/edit-info-employee/:userId"
+        element={
+          <ProtectedRoute>
+            <UpdateInfoEmployeeForOwner />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/deleted-employees"
+        element={
+          <ProtectedRoute>
+            <EmployeeDeletedManage />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/information-profile/:userId" element={
+          <ProtectedRoute>
+            <InformationProfile />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Product Manage (Protected) */}
+      <Route
+        path="/product-manage"
+        element={
+          <ProtectedRoute>
+            <ProductManageForOwner />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/add-product"
+        element={
+          <ProtectedRoute>
+            <AddProductForOwner />
+          </ProtectedRoute>
+        }
+      /> 
+      <Route
+        path="/product-detail/:productId"
+        element={
+          <ProtectedRoute>
+            <ProductDetail />
+          </ProtectedRoute>
+        }
+      />
+
+
+      {/* กัน path แปลก ๆ */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  );
+}
+
+export default App;
