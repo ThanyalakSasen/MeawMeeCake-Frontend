@@ -10,10 +10,9 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import CompleteProfile from "./pages/CompleteProfile";
 import UpdateProfile from "./pages/UpdatePage";
-import DetailInfoOwnerAndEmployee from "./pages/ownerPages/DetailInfoOwnerAndEmployee";
-import UpdateInfoEmployeeForOwner from "./pages/ownerPages/UpdateInfoEmployeeForOwner";
-import EmployeeDeletedManage from "./pages/ownerPages/EmployeeDeletedManage";
+import EditInfoEmployeeForOwner from "./pages/ownerPages/EditInfoEmployeeForOwner";
 import EmployeeManage from "./pages/ownerPages/EmployeeManage";
+import ManageDeletedEmployeeList from "./pages/ownerPages/ManageDeletedEmployeeList"
 import CreateUserForOwner from "./pages/ownerPages/CreateUserForOwner";
 import ProductManageForOwner from "./pages/ownerPages/ProductManageForOwner";
 import AddProductForOwner from "./pages/ownerPages/AddProductForOwner";
@@ -84,18 +83,10 @@ function App() {
 
       {/* View Employee Detail (Protected) */}
       <Route
-        path="/view-info-employee/:userId"
-        element={
-          <ProtectedRoute>
-            <DetailInfoOwnerAndEmployee />
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/edit-info-employee/:userId"
         element={
           <ProtectedRoute>
-            <UpdateInfoEmployeeForOwner />
+            <EditInfoEmployeeForOwner />
           </ProtectedRoute>
         }
       />
@@ -103,7 +94,7 @@ function App() {
         path="/deleted-employees"
         element={
           <ProtectedRoute>
-            <EmployeeDeletedManage />
+            <ManageDeletedEmployeeList />
           </ProtectedRoute>
         }
       />

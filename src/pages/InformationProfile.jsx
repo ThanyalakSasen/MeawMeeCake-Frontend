@@ -2,9 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Container,
-  Navbar,
-  Nav,
-  Dropdown,
   Spinner,
   Row,
   Col,

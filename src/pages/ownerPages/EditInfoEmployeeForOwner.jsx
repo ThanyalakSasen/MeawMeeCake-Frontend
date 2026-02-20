@@ -20,6 +20,8 @@ import api from "../../service/api";
 export default function UpdateInfoEmployeeForOwner() {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const API_BASE_URL =
+    import.meta.env.VITE_API_URL || "http://localhost:3000";
 
   // ===== FORM STATE =====
   const [image, setImage] = useState(null);
@@ -62,7 +64,7 @@ export default function UpdateInfoEmployeeForOwner() {
   const getImageUrl = (path) => {
     if (!path) return "";
     if (path.startsWith("http")) return path;
-    return `http://localhost:3000${path}`;
+    return `${API_BASE_URL}${path}`;
   };
 
   const formatDateToISO = (date) => {
@@ -81,7 +83,7 @@ export default function UpdateInfoEmployeeForOwner() {
         const token = localStorage.getItem("token");
 
         const res = await api.get(
-          `/api/auth/admin/employee/${userId}`,
+          `/api/user/admin/employee/${userId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -107,10 +109,14 @@ export default function UpdateInfoEmployeeForOwner() {
           setPartTimeHours(emp.part_time_hours || "");
 
           setPreviewImage(getImageUrl(emp.user_img));
+        } else {
+          setErrorMessage(res?.data?.message || "ไม่พบข้อมูลพนักงาน");
         }
       } catch (err) {
         console.error("Error fetching employee:", err);
-        setErrorMessage("เกิดข้อผิดพลาดในการดึงข้อมูล");
+        setErrorMessage(
+          err?.response?.data?.message || "เกิดข้อผิดพลาดในการดึงข้อมูล"
+        );
       } finally {
         setIsFetching(false);
       }
@@ -192,7 +198,7 @@ export default function UpdateInfoEmployeeForOwner() {
       }
 
       const res = await api.put(
-        `/api/auth/admin/update-info-employee-for-admin/${userId}`,
+        `/api/user/admin/update-info-employee-for-admin/${userId}`,
         formData,
         {
           headers: {
@@ -205,13 +211,15 @@ export default function UpdateInfoEmployeeForOwner() {
       if (res.data.success) {
         setSuccessMessage("อัปเดตข้อมูลพนักงานสำเร็จ");
         setTimeout(
-          () => navigate(`/view-info-employee/${userId}`),
+          () => navigate(`/information-profile/${userId}`),
           1500
         );
       }
     } catch (err) {
       console.error("Error updating employee:", err);
-      setErrorMessage("เกิดข้อผิดพลาดในการอัปเดตข้อมูล");
+      setErrorMessage(
+        err?.response?.data?.message || "เกิดข้อผิดพลาดในการอัปเดตข้อมูล"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -355,7 +363,7 @@ export default function UpdateInfoEmployeeForOwner() {
                   className="me-2"
                   type="button"
                   onClick={() =>
-                    navigate(`/view-info-employee/${userId}`)
+                    navigate(`/information-profile/${userId}`)
                   }
                 >
                   ยกเลิก
