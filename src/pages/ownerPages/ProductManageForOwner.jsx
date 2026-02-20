@@ -22,15 +22,35 @@ export default function ProductManageForOwner() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const extractProducts = (payload) => {
+    if (Array.isArray(payload)) return payload;
+    if (!payload || typeof payload !== "object") return [];
+
+    if (Array.isArray(payload.data)) return payload.data;
+    if (Array.isArray(payload.products)) return payload.products;
+    if (Array.isArray(payload.result)) return payload.result;
+
+    if (payload.data && typeof payload.data === "object") {
+      if (Array.isArray(payload.data.products)) return payload.data.products;
+      if (Array.isArray(payload.data.result)) return payload.data.result;
+    }
+
+    return [];
+  };
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await api.get("/api/products/get-all");
-        const data = response?.data?.data || response?.data || [];
-        setProducts(Array.isArray(data) ? data : []);
+        const response = await api.get("/api/product/allProduct");
+        const data = extractProducts(response?.data);
+        setProducts(data);
       } catch (error) {
         console.error("เกิดข้อผิดพลาดในการดึงข้อมูลสินค้า:", error);
-        setError("ไม่สามารถดึงข้อมูลสินค้าได้");
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.message ||
+          "ไม่สามารถดึงข้อมูลสินค้าได้";
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }

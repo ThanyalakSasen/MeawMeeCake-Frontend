@@ -2,14 +2,14 @@ import { useState, useEffect } from "react";
 import Table from "react-bootstrap/Table";
 import { Container, Row, Col, Button, Spinner, Alert } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { FiTrash2, FiRefreshCcw } from "react-icons/fi";
+import { FiTrash2, FiEye, FiBarChart } from "react-icons/fi";
 import Swal from "sweetalert2";
 import SideBarMenu from "../../components/SideBarMenu";
 import NavBar from "../../components/NavBar";
 import { InputField } from "../../components/inputField";
 import api from "../../service/api";
 
-export default function EmployeeDeletedManage() {
+export default function EmployeeManage() {
   const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,67 +23,41 @@ export default function EmployeeDeletedManage() {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const response = await api.get("/api/auth/admin/deleted-employees");
+      console.log("Fetching employees...");
+
+      const response = await api.get("/api/user/admin/deleted-employees");
+      console.log("Response:", response);
+      console.log("Response data:", response.data);
+
       if (response.data.success) {
-        setEmployees(response.data.data);
+        console.log("Employees data:", response.data.data);
+        console.log("Number of employees:", response.data.data.length);
+
+        // Filter เฉพาะพนักงานที่ไม่ได้ถูก soft delete
+        const activeEmployees = response.data.data.filter(
+          (emp) => emp.softDelete !== false,
+        );
+        console.log("Active employees after filter:", activeEmployees.length);
+        setEmployees(activeEmployees);
       }
     } catch (err) {
+      console.error("Fetch Employees Error:", err);
+      console.error("Error response:", err.response);
       setError(err.response?.data?.message || "เกิดข้อผิดพลาดในการดึงข้อมูล");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRestore = async (employeeId) => {
+  const handleSoftDelete = async (employeeId) => {
     const result = await Swal.fire({
-      title: "ยืนยันการกู้คืนพนักงาน",
-      text: "คุณต้องการกู้คืนพนักงานคนนี้ใช่หรือไม่?",
+      title: "ยืนยันการลบพนักงานแบบถาวร",
+      text: "คุณต้องการลบพนักงานคนนี้แบบถาวรใช่หรือไม่?",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
       cancelButtonColor: "#6c757d",
-      confirmButtonText: "กู้คืน",
-      cancelButtonText: "ยกเลิก",
-      reverseButtons: true,
-    });
-
-    // ถ้ากด Cancel
-    if (!result.isConfirmed) return;
-
-    try {
-      const response = await api.put(
-        `/api/auth/admin/employees/${employeeId}/restore`,
-      );
-
-      if (response.data.success) {
-        await Swal.fire({
-          icon: "success",
-          title: "กู้คืนสำเร็จ",
-          text: "กู้คืนข้อมูลพนักงานเรียบร้อยแล้ว",
-          timer: 1500,
-          showConfirmButton: false,
-        });
-
-        fetchEmployees();
-      }
-    } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: "เกิดข้อผิดพลาด",
-        text: err.response?.data?.message || "ไม่สามารถกู้คืนพนักงานได้",
-      });
-    }
-  };
-
-  const handlePermanentDelete = async (employeeId) => {
-    const result = await Swal.fire({
-      title: "ยืนยันการลบข้อมูลถาวร",
-      text: "คุณต้องการลบข้อมูลพนักงานคนนี้ใช่หรือไม่? การดำเนินการนี้ไม่สามารถยกเลิกได้",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#6c757d",
-      confirmButtonText: "ลบข้อมูล",
+      confirmButtonText: "ลบ",
       cancelButtonText: "ยกเลิก",
       reverseButtons: true,
     });
@@ -93,13 +67,13 @@ export default function EmployeeDeletedManage() {
 
     try {
       const response = await api.delete(
-        `/api/auth/admin/employees/${employeeId}/hardDeleted`,
+        `/api/user/admin/employees/${employeeId}/hardDeleted`,
       );
 
       if (response.data.success) {
         await Swal.fire({
           icon: "success",
-          title: "ลบข้อมูลสำเร็จ",
+          title: "ลบสำเร็จ",
           text: "ลบข้อมูลพนักงานเรียบร้อยแล้ว",
           timer: 1500,
           showConfirmButton: false,
@@ -111,7 +85,7 @@ export default function EmployeeDeletedManage() {
       Swal.fire({
         icon: "error",
         title: "เกิดข้อผิดพลาด",
-        text: err.response?.data?.message || "ไม่สามารถลบข้อมูลพนักงานได้",
+        text: err.response?.data?.message || "ไม่สามารถลบพนักงานแบบถาวรได้",
       });
     }
   };
@@ -126,7 +100,6 @@ export default function EmployeeDeletedManage() {
   return (
     <Container fluid className="p-0" style={{ minHeight: "100vh" }}>
       <Row className="g-0" style={{ minHeight: "100vh" }}>
-        {/* Sidebar */}
         <Col md={3} lg={3} className="bg-white">
           <SideBarMenu />
         </Col>
@@ -147,16 +120,18 @@ export default function EmployeeDeletedManage() {
             <Row className="align-items-center p-0 w-80">
               <Col md={6}>
                 <form
-                  style={{ display: "flex", gap: "10px" }}
+                  style={{ display: "flex", gap: "10px", padding:"0" }}
                   onSubmit={(e) => e.preventDefault()}
                 >
                   <InputField
+
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="ค้นหาชื่อ, อีเมล, รหัสพนักงาน"
                   />
                 </form>
               </Col>
+              <Col md={6} className="text-end"></Col>
             </Row>
           </div>
 
@@ -205,21 +180,24 @@ export default function EmployeeDeletedManage() {
                       <td>{employee.user_fullname}</td>
                       <td>{employee.email}</td>
                       <td>{employee.user_phone || "-"}</td>
+
                       <td>
                         <Button
                           size="sm"
-                          variant="success"
+                          variant="warning"
                           className="me-2"
-                          onClick={() => handleRestore(employee._id)}
+                          onClick={() =>
+                            navigate(`/information-profile/${employee._id}`)
+                          }
                         >
-                          <FiRefreshCcw /> กู้คืน
+                          <FiEye /> ดูรายละเอียด
                         </Button>
                         <Button
                           size="sm"
                           variant="danger"
-                          onClick={() => handlePermanentDelete(employee._id)}
+                          onClick={() => handleSoftDelete(employee._id)}
                         >
-                          <FiTrash2 /> ลบถาวร
+                          <FiTrash2 /> ลบ
                         </Button>
                       </td>
                     </tr>

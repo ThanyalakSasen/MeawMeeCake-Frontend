@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { InputField } from "../../components/inputField";
 import SideBarMenu from "../../components/SideBarMenu";
 import { SelectInput } from "../../components/selectInput";
@@ -11,7 +11,10 @@ import api from "../../service/api";
 export default function AddProductForOwner() {
   const [productNameTh, setProductNameTh] = useState("");
   const [productNameEng, setProductNameEng] = useState("");
-  const [productType, setProductType] = useState("");
+  const [productTypes, setProductTypes] = useState([
+    { value: "", label: "กรุณาเลือกประเภทสินค้า" },
+  ]);
+  const [categoryLoading, setCategoryLoading] = useState(false);
   const [productPrice, setProductPrice] = useState("");
   const [productDescription, setProductDescription] = useState("");
   const [preparationHeating, setPreparationHeating] = useState("");
@@ -21,19 +24,6 @@ export default function AddProductForOwner() {
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const productTypes = [
-    { value: "", label: "กรุณาเลือกประเภทสินค้า" },
-    { value: "ขนมปัง", label: "ขนมปัง" },
-    { value: "เค้ก", label: "เค้ก" },
-    { value: "คัพเค้ก", label: "คัพเค้ก" },
-    { value: "Sourdough", label: "Sourdough" },
-  ];
-
-  const recipeOptions = [
-    { value: "", label: "กรุณาเลือกสูตรอาหาร" },
-    { value: "64a7f0c2e4b0f5b1c8d6e1a1", label: "สูตรที่ 1" },
-    { value: "64a7f0c2e4b0f5b1c8d6e1a2", label: "สูตรที่ 2" },
-  ];
 
   const [hasHeatingMethod, setHasHeatingMethod] = useState(null);
 
@@ -46,18 +36,42 @@ export default function AddProductForOwner() {
     }
   };
 
+  //useEffect ดึงข้อมูล Category
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setCategoryLoading(true);
+        const response = await api.get("/api/product/create-product");
+
+        // ปรับ field ให้ตรงกับ CategoryModel จริง
+        const categories = response?.data?.data || response?.data || [];
+
+        const options = [
+          { value: "", label: "กรุณาเลือกประเภทสินค้า" },
+          ...categories.map((cat) => ({
+            value: cat._id, // หรือ cat.category_name ขึ้นอยู่กับ Backend
+            label: cat.category_name, // แก้ให้ตรงกับ field จริงใน Model
+          })),
+        ];
+
+        setProductTypes(options);
+      } catch (error) {
+        console.error("ดึงข้อมูล Category ไม่สำเร็จ:", error);
+      } finally {
+        setCategoryLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage("");
     setSuccessMessage("");
 
     // Validation
-    if (
-      !productNameTh ||
-      !productNameEng ||
-      !productType ||
-      !productPrice
-    ) {
+    if (!productNameTh || !productNameEng || !productTypes || !productPrice) {
       setErrorMessage("กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน");
       return;
     }
@@ -68,7 +82,7 @@ export default function AddProductForOwner() {
       html: `
         <div style="text-align: left;">
           <p><strong>ชื่อสินค้า:</strong> ${productNameTh} / ${productNameEng}</p>
-          <p><strong>ประเภท:</strong> ${productType}</p>
+          <p><strong>ประเภท:</strong> ${productTypes}</p>
           <p><strong>ราคา:</strong> ${productPrice} บาท</p>
           </div>
       `,
@@ -90,11 +104,11 @@ export default function AddProductForOwner() {
       const formData = new FormData();
       formData.append("product_name_th", productNameTh);
       formData.append("product_name_eng", productNameEng);
-      formData.append("product_type", productType);
+      formData.append("product_type", productTypes);
       formData.append("product_price", productPrice);
       formData.append("product_description", productDescription);
       formData.append("preparation_heating", preparationHeating);
-      
+
       // Only append recipe_id if it's selected
       if (recipeId && recipeId !== "") {
         formData.append("recipe_id", recipeId);
@@ -129,9 +143,8 @@ export default function AddProductForOwner() {
         // รีเซ็ตฟอร์ม
         setProductNameTh("");
         setProductNameEng("");
-        setProductType("");
+        setProductTypes("");
         setProductNameEng("");
-        setProductType("");
         setProductPrice("");
         setProductDescription("");
         setRecipeId("");
@@ -194,14 +207,9 @@ export default function AddProductForOwner() {
                     <SelectInput
                       label="ประเภทสินค้า *"
                       options={productTypes}
-                      value={productType}
-                      onChange={(e) => setProductType(e.target.value)}
-                    />
-                    <SelectInput
-                      label="สูตรอาหาร (ถ้ามี)"
-                      options={recipeOptions}
-                      value={recipeId}
-                      onChange={(e) => setRecipeId(e.target.value)}
+                      value={productTypes}
+                      onChange={(e) => setProductTypes(e.target.value)}
+                      disabled={categoryLoading} // disable ระหว่างโหลด
                     />
                   </Col>
                 </Row>

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Table from "react-bootstrap/Table";
 import { Container, Row, Col, Button, Spinner, Alert } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { FiTrash2, FiEye, FiBarChart } from "react-icons/fi";
+import { FiTrash2, FiEye, FiBarChart, FiEdit } from "react-icons/fi";
 import Swal from "sweetalert2";
 import SideBarMenu from "../../components/SideBarMenu";
 import NavBar from "../../components/NavBar";
@@ -25,7 +25,7 @@ export default function EmployeeManage() {
       setLoading(true);
       console.log("Fetching employees...");
       
-      const response = await api.get("/api/auth/admin/employees");
+      const response = await api.get("/api/user/admin/employees");
       console.log("Response:", response);
       console.log("Response data:", response.data);
       
@@ -35,7 +35,7 @@ export default function EmployeeManage() {
         
         // Filter เฉพาะพนักงานที่ไม่ได้ถูก soft delete
         const activeEmployees = response.data.data.filter(
-          (emp) => emp.softDelete !== true
+          (emp) => emp.softDelete === false
         );
         console.log("Active employees after filter:", activeEmployees.length);
         setEmployees(activeEmployees);
@@ -66,11 +66,30 @@ const handleSoftDelete = async (employeeId) => {
   if (!result.isConfirmed) return;
 
   try {
-    const response = await api.delete(
-      `/api/auth/admin/delete-employee/${employeeId}`
-    );
+    const softDeleteEndpoints = [
+      `/api/user/admin/employees/${employeeId}/softDeleted`,
+    ];
 
-    if (response.data.success) {
+    let response;
+    let lastError;
+
+    for (const endpoint of softDeleteEndpoints) {
+      try {
+        response = await api.delete(endpoint);
+        break;
+      } catch (error) {
+        if (error?.response?.status !== 404) {
+          throw error;
+        }
+        lastError = error;
+      }
+    }
+
+    if (!response) {
+      throw lastError || new Error("Soft delete endpoint not found");
+    }
+
+    if (response.data.success) { 
       await Swal.fire({
         icon: "success",
         title: "ลบสำเร็จ",
@@ -101,19 +120,16 @@ const handleSoftDelete = async (employeeId) => {
   return (
     <Container fluid className="p-0" style={{ minHeight: "100vh" }}>
       <Row className="g-0" style={{ minHeight: "100vh" }}>
-        {/* Sidebar */}
         <Col md={3} lg={3} className="bg-white">
           <SideBarMenu />
         </Col>
 
-        
         <Col md={9} lg={9} style={{ backgroundColor: "#F0F0FA" }}>
           
           <div className="p-3">
             <NavBar titleMain="รายชื่อพนักงาน" />
           </div>
 
-          
           <div
             style={{
               backgroundColor: "#fff",
@@ -199,6 +215,7 @@ const handleSoftDelete = async (employeeId) => {
                       <td>{employee.user_fullname}</td>
                       <td>{employee.email}</td>
                       <td>{employee.user_phone || "-"}</td>
+
                       <td>
                         <Button
                           size="sm"
@@ -208,7 +225,7 @@ const handleSoftDelete = async (employeeId) => {
                             navigate(`/information-profile/${employee._id}`)
                           }
                         >
-                          <FiEye /> ดูรายละเอียด
+                          <FiEdit /> แก้ไข
                         </Button>
                         <Button
                           size="sm"

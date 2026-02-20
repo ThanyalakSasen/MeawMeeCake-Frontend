@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { InputField } from "../../components/inputField";
 import InputDate from "../../components/inputDate";
 import SideBarMenu from "../../components/SideBarMenu";
@@ -23,7 +23,7 @@ export default function CreateUserForAdmin() {
   const [employeeType, setEmployeeType] = useState("");
   const [employeeSalary, setEmployeeSalary] = useState("");
   const [partTimeHours, setPartTimeHours] = useState("");
-
+  const [positionOptions, setPositionOption] = useState([]);
   const [password, setPassword] = useState("");
   const passwordLength = 6;
 
@@ -31,6 +31,27 @@ export default function CreateUserForAdmin() {
   const [errorMessage, setErrorMessage] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+useEffect(() => {
+  const fetchPositions = async () => {
+    try {
+      const response = await api.get("/api/position/allPosition");
+
+      const positions = response?.data?.data || response?.data || [];
+      const options = [
+        { value: "", label: "กรุณาเลือกตำแหน่งงาน" },
+        ...positions.map((pos) => ({
+          value: pos._id,
+          label: pos.position_name, // ให้ตรงกับ field ใน PositionModel
+        })),
+      ];
+      setPositionOption(options);
+    } catch (error) {
+      console.error("ดึงข้อมูลตำแหน่งพนักงานไม่สำเร็จ :", error);
+    }
+  };
+  fetchPositions(); // การเรียกฟังก์ชัน
+}, []);
 
   const generatePassword = () => {
     const charset = "0123456789abcdefghijklmnopqrstuvwxyz";
@@ -56,19 +77,12 @@ export default function CreateUserForAdmin() {
     { value: "Customer", label: "ลูกค้า" },
   ];
 
-  const positionOptions = [
-    { value: "", label: "กรุณาเลือกตำแหน่ง" },
-    { value: "พนักงานครัว", label: "พนักงานครัว" },
-    { value: "พนักงานบริการ", label: "พนักงานบริการ" },
-    { value: "ผู้จัดการ", label: "ผู้จัดการ" },
-    { value: "แม่บ้าน", label: "แม่บ้าน" },
-  ];
-
-  const typeEmployeeOptions = [
-    { value: "", label: "กรุณาเลือกประเภทพนักงาน" },
-    { value: "Full-time", label: "เต็มเวลา" },
-    { value: "Part-time", label: "พาร์ทไทม์" },
-  ];
+const typeEmployeeOptions = [
+  { value: "", label: "กรุณาเลือกประเภทพนักงาน" },
+  { value: "Full-time", label: "เต็มเวลา" },
+  { value: "Part-time", label: "พาร์ทไทม์" },
+  { value: "Daily", label: "รายวัน" },
+];
 
   // ฟังก์ชันแปลงวันที่เป็น ISO format
   const formatDateToISO = (date) => {
@@ -145,11 +159,17 @@ export default function CreateUserForAdmin() {
       // เตรียมข้อมูลสำหรับส่งไป Backend
       const formData = new FormData();
       
-      formData.append("user_fullname", fullname);
+      formData.append("userFullname", fullname);
       formData.append("email", email);
       formData.append("password", password);
-      formData.append("user_phone", phone);
+      formData.append("empPosition", position);
+      formData.append("userPhone", phone);
+      formData.append("userBirthdate", formatDateToISO(birthdate));
       formData.append("role", role);
+      formData.append("empSalary", Number(employeeSalary));
+      formData.append("startWorkingDate", formatDateToISO(startWorkDate));
+      formData.append("employmentType", employeeType);
+      formData.append("empStatus", "Active"); 
       formData.append("authProvider", "local");
       formData.append("isEmailVerified", "true");
       formData.append("profileCompleted", "true");
@@ -183,7 +203,7 @@ export default function CreateUserForAdmin() {
       const token = localStorage.getItem("token");
 
       const response = await api.post(
-        "/api/auth/admin/create-user",
+        "/api/user/admin/create-user",
         formData,
         {
           headers: {

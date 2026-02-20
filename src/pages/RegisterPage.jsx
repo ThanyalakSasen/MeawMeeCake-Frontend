@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import authAPI from "../service/authService";
+import api from "../service/api"; 
 import { InputField } from "../components/inputField";
 import InputDate from "../components/inputDate";
 import { SelectInput } from "../components/selectInput";
@@ -8,18 +9,6 @@ import ButtonSubmit from "../components/button";
 import axios from "axios";
 import { Col, Container, Row, Form } from "react-bootstrap";
 import loginPicture from "../assets/pictures/LoginRegisterPicture.png";
-
-// ตัวอย่างรายการวัตถุดิบที่อาจแพ้
-const allergyOptions = [
-  { value: "milk", label: "นม" },
-  { value: "eggs", label: "ไข่" },
-  { value: "peanuts", label: "ถั่วลิสง" },
-  { value: "soy", label: "ถั่วเหลือง" },
-  { value: "wheat", label: "ข้าวสาลี/กลูเตน" },
-  { value: "fish", label: "ปลา" },
-  { value: "shellfish", label: "อาหารทะเล" },
-  { value: "nuts", label: "ถั่วต่างๆ" },
-];
 
 export default function Register() {
   const navigate = useNavigate();
@@ -29,6 +18,8 @@ export default function Register() {
   const googleId = useLocation().state?.googleId || "";
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
+  const [allergyOptions, setAllergyOptions] = useState([]);
+  const [allergyLoading, setAllergyLoading] = useState(false);
   const [hasAllergies, setHasAllergies] = useState(null);
   const [selectedAllergy, setSelectedAllergy] = useState("");
   const [selectedAllergies, setSelectedAllergies] = useState([]);
@@ -52,6 +43,30 @@ export default function Register() {
   const handleRemoveAllergy = (allergyValue) => {
     setSelectedAllergies(selectedAllergies.filter((a) => a !== allergyValue));
   };
+
+  useEffect(() => {
+    const fetchIngredients = async () => {
+      try {
+        setAllergyLoading(true);
+        const response = await api.get("/api/ingredient/allIngredient");
+
+        const ingredients = response?.data?.data || response?.data || [];
+
+        const options = ingredients.map((ingredient) => ({
+          value: ingredient._id, // แก้ให้ตรงกับ field จริงใน Model
+          label: ingredient.ingredient_name, // แก้ให้ตรงกับ field จริงใน Model
+        }));
+
+        setAllergyOptions(options);
+      } catch (error) {
+        console.error("ดึงข้อมูลวัตถุดิบไม่สำเร็จ:", error);
+      } finally {
+        setAllergyLoading(false);
+      }
+    };
+
+    fetchIngredients();
+  }, []);
 
   const getAllergyLabel = (value) => {
     const option = allergyOptions.find((opt) => opt.value === value);
@@ -154,7 +169,7 @@ export default function Register() {
                     value={birthdate}
                     onChange={(value) =>
                       setBirthdate(
-                        value ? value.toISOString().split("T")[0] : ""
+                        value ? value.toISOString().split("T")[0] : "",
                       )
                     }
                     required
@@ -226,11 +241,19 @@ export default function Register() {
                     }}
                   >
                     <div style={{ flex: 1 }}>
-                      <Select
-                        options={allergyOptions}
+                      <SelectInput
+                        options={[
+                          {
+                            value: "",
+                            label: allergyLoading
+                              ? "กำลังโหลด..."
+                              : "เลือกวัตถุดิบที่แพ้",
+                          },
+                          ...allergyOptions,
+                        ]}
                         value={selectedAllergy}
                         onChange={(e) => setSelectedAllergy(e.target.value)}
-                        placeholder="เลือกวัตถุดิบที่แพ้"
+                        disabled={allergyLoading}
                       />
                     </div>
                     <button
