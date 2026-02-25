@@ -12,7 +12,7 @@ export const InputField = ({
   name,
 }) => {
   return (
-    <Form.Group className="mb-3 w-100" controlId={name}>
+    <Form.Group className={`${label ? "mb-3" : ""} w-100`} controlId={name}>
       {label && <Form.Label>{label}</Form.Label>}
       <Form.Control
         type={type}
