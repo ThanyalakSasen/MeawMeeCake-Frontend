@@ -93,6 +93,7 @@ export default function AddRecipeForOwner() {
               <IngredientSection
                 ingredientLabel="สูตรส่วนประกอบ"
                 emptyText="ยังไม่มีสูตรส่วนประกอบ"
+                addIngredientLabel="เพิ่มสูตรส่วนประกอบ"
                 ingredients={recipeComponent}
                 ingredientOptions={ingredientOptions}
                 unitOptions={unitOptions}

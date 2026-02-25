@@ -13,7 +13,7 @@ export default function IngredientSection({
   ingredientLabel = "ส่วนผสม",
   quantityLabel = "ปริมาณ",
   unitLabel = "หน่วย",
-  addIngredientLabel = "วัตถุดิบ",
+  addIngredientLabel = "เพิ่มวัตถุดิบ",
   emptyText = "ยังไม่มีวัตถุดิบ",
 }) {
   const handleChange = (id, field) => (e) =>
